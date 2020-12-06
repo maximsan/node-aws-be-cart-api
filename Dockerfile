@@ -3,15 +3,24 @@ FROM node:12-alpine as build
 
 WORKDIR /app
 
-# Deps
+# DEPS
 COPY package*.json ./
-RUN npm i
+RUN npm install && npm cache clean --force
 
 # BUILD
+WORKDIR /app
 COPY . .
 RUN npm run build
 
-# APP
+# APPLICATION
+FROM node:12-alpine as application
+
+# copy from build and install
+COPY --from=build /app/package*.json ./
+RUN npm install --only=production
+
+# copy from build dist
+COPY --from=build /app/dist ./dist
 
 USER node
 ENV PORT=8080
